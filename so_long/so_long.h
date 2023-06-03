@@ -45,19 +45,23 @@ typedef struct s_game {
     t_data  img;
 }               t_game;
 
+int	check_path(t_game *all, char **maps);
 int close_win(t_game *all);
-int ft_collen(char *path);
-int ft_rowlen(char *path);
+int ft_collen(char *path, t_game *all);
+int ft_rowlen(char *path, t_game *all);
 int	key_hook (int keycode, void *r);
 int	valid_move (t_game *all, char c);
+int	valid_path(t_game *all);
 void    checklinelen(t_game *all);
 void	c_num (t_game *all);
 void	do_move (int keycode, t_game *all);
 void    fillmap(char *path, t_game *all);
+void	floodfill(int x, int y, char **map);
+void	free_new_map(char **maps, int y);
 void	find_pos (t_game *all);
-void	free_close(t_game *all);
+void	free_close(t_game *all, char *str);
+void	free_map(t_game *all);
 void	ft_checkmap(char *path, t_game *all);
-void    ft_printmap(t_game *all);
 void	init_game (t_game *all);
 void	move_down(t_game *all);
 void	move_up(t_game *all);

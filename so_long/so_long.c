@@ -11,25 +11,99 @@
 /* ************************************************************************** */
 
 #include "so_long.h"
-void	free_close(t_game *all)
+
+void	free_new_map(char **maps, int y)
 {
-	if (all->img.key)
+	int	i;
+
+	i = 0;
+	while (i < y)
+	{
+		free (maps[i]);
+		i++;
+	}
+	free (maps);
+	maps = NULL;
+}
+
+int	check_path(t_game *all, char **maps)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	while (i < all->collen)
+	{
+		j = 0;
+		while (j < all->rowlen)
+		{
+			if (maps[i][j] == 'C' || maps[i][j] == 'E')
+				return (0);
+			j++;
+		}
+		i++;
+	}
+	return (1);
+}
+
+int	valid_path(t_game *all)
+{
+	char	**maps;
+	int		i;
+
+	maps = malloc ((all->collen) * sizeof(char *));
+	i = 0;
+	while (i < all->collen)
+	{
+		maps[i] = ft_strdup(all->map[i]);
+		i++;
+	}
+	find_pos(all);
+	floodfill(all->x, all->y, maps);
+	if (check_path(all, maps) == 0)
+	{
+		free_new_map (maps, all->collen);
+		free_close(all, "Error\ninvalid path\n");
+	}
+	free_new_map(maps, all->collen);
+	return (1);
+}
+
+void	floodfill(int x, int y, char **map)
+{
+	map[y][x] = '1';
+	if (map[y][x + 1] != '1')
+		floodfill((x + 1), y, map);
+	if (map[y][x - 1] != '1')
+		floodfill((x - 1), y, map);
+	if (map[y + 1][x] != '1')
+		floodfill(x, (y + 1), map);
+	if (map[y - 1][x] != '1')
+		floodfill(x, (y - 1), map);
+}
+
+void	free_close(t_game *all, char *str)
+{
+	if (all->img.key != NULL)
 		mlx_destroy_image(all->mlx, all->img.key);
-	if (all->img.wall)
+	if (all->img.wall != NULL)
 		mlx_destroy_image(all->mlx, all->img.wall);
-	if (all->img.exit)
+	if (all->img.exit != NULL)
 		mlx_destroy_image(all->mlx, all->img.exit);
-	if (all->img.knight)
+	if (all->img.knight != NULL)
 		mlx_destroy_image(all->mlx, all->img.knight);
-	if (all->img.background)
+	if (all->img.background != NULL)
 		mlx_destroy_image(all->mlx, all->img.background);
-	if (all->win)
+	if (all->win != NULL)
 		mlx_destroy_window(all->mlx, all->win);
-	if (all->mlx)
+	if (all->mlx != NULL)
 	{
 		mlx_destroy_display(all->mlx);
 		free(all->mlx);
 	}
+	if (all->map != NULL)
+		free_map(all);	
+	ft_putstr_fd(str, 0);
 	exit (0);
 }
 void	init_game (t_game *all)
@@ -41,6 +115,16 @@ void	init_game (t_game *all)
 	all->c_progress = 0;
 	all->x = 0;
 	all->y = 0;
+	all->mlx = NULL;
+	all->win = NULL;
+	all->map = NULL;
+	all->img.background = NULL;
+	all->img.knight = NULL;
+	all->img.exit = NULL;
+	all->img.wall = NULL;
+	all->img.key = NULL;
+
+
 }
 void	c_num (t_game *all)
 {
@@ -68,7 +152,7 @@ void	c_num (t_game *all)
 		i++;
 	}
 	if (p != 1 || e != 1 || all->c_number < 1)
-		free_close(all);
+		free_close(all, "Error\ninvalid chars\n");
 }
 
 int	valid_move (t_game *all, char c)
@@ -120,7 +204,7 @@ void	move_left(t_game *all)
 		all->map[y][x-1] = '0';
 	}
 	if (all->map[y][x-1] == 'E' && all->c_number == all->c_progress)
-		free_close(all);
+		free_close(all, "");
 	all->x -= 1;
 	all->n_moves += 1;
 }
@@ -140,7 +224,7 @@ void	move_right(t_game *all)
 		all->map[y][x+1] = '0';
 	}
 	if (all->map[y][x+1] == 'E' && all->c_number == all->c_progress)
-		free_close(all);
+		free_close(all, "");
 	all->x += 1;
 	all->n_moves += 1;
 }
@@ -160,7 +244,7 @@ void	move_up(t_game *all)
 		all->map[y-1][x] = '0';
 	}
 	if (all->map[y-1][x] == 'E' && all->c_number == all->c_progress)
-		free_close(all);
+		free_close(all, "");
 	all->y -= 1;
 	all->n_moves += 1;
 }
@@ -180,7 +264,7 @@ void	move_down(t_game *all)
 		all->map[y+1][x] = '0';
 	}
 	if (all->map[y+1][x] == 'E' && all->c_number == all->c_progress)
-		free_close(all);
+		free_close(all, "");
 	all->y += 1;
 	all->n_moves += 1;
 }
@@ -195,6 +279,8 @@ void	swap_img (int keycode, t_game *all)
 		move_up (all);
 	if (keycode == 115)
 		move_down (all);
+	ft_putnbr_fd(all->n_moves, 0);
+	write(1,"\n",1);
 }
 
 void	do_move (int keycode, t_game *all)
@@ -251,7 +337,7 @@ int	main(int ac, char **av)
 {
 	t_game	all;
 
-	if(ac != 2)
+	if (ac != 2)
 		return(0);
 	else
 	{
@@ -261,10 +347,8 @@ int	main(int ac, char **av)
 		onlywalls(&all);
 		find_pos(&all);
 		c_num (&all);
-		printf("%d\n", all.c_number);
 		all.mlx = mlx_init();
 		all.win = mlx_new_window(all.mlx, all.rowlen * 32, all.collen * 32, "so_long");
-		ft_printmap(&all);
 		mlx_hook(all.win, 17, 0, close_win, &all);
 		mlx_key_hook(all.win, key_hook, &all);
 		all.img.knight = mlx_xpm_file_to_image(all.mlx, "./img/knight.xpm", &all.img.width, &all.img.height);

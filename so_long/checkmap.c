@@ -12,13 +12,27 @@
 
 #include "so_long.h"
 
+void	free_map(t_game *all)
+{
+	int	i;
+
+	i = 0;
+	while (i < all->collen)
+	{
+		free (all->map[i]);
+		i++;
+	}
+	free (all->map);
+	all->map = NULL;
+}
+
 void ft_checkmap(char *path, t_game *all)
 {
     int i;
 
     i = 0;
-   all->collen = ft_collen(path);
-   all->rowlen = ft_rowlen(path);
+   all->collen = ft_collen(path, all);
+   all->rowlen = ft_rowlen(path, all);
    all->map = malloc(sizeof(char *) * all->collen);
    while(i < all->collen)
    {
@@ -27,13 +41,15 @@ void ft_checkmap(char *path, t_game *all)
    }
 }
 
-int ft_rowlen(char *path)
+int ft_rowlen(char *path, t_game *all)
 {
     int i;
     char *str;
     int fd;
 
     fd = open(path, O_RDONLY);
+    if (fd < 0)
+        free_close(all, "Error\ninvalid file\n");
     i = 0;
     while(1)
     {
@@ -49,14 +65,17 @@ int ft_rowlen(char *path)
     return(i);
 }
 
-int ft_collen(char *path)
+int ft_collen(char *path, t_game *all)
 {
     int i;
     char *str;
     int fd;
 
-    fd = open(path, O_RDONLY);
+    str = NULL;
     i = 0;
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        free_close(all, "Error\ninvalid file\n");
     while(1)
     {
         str = ft_calloc(2, 1);
@@ -101,18 +120,7 @@ void    fillmap(char *path, t_game *all)
         i++;
     }
     close(fd);
-}
-
-void    ft_printmap(t_game *all)
-{
-    int i;
-
-    i = 0;
-    while (i < all->collen)
-    {
-        printf("%s\n", all->map[i]);
-        i++;
-    }
+    valid_path(all);
 }
 
 void    checklinelen(t_game *all)
@@ -123,11 +131,11 @@ void    checklinelen(t_game *all)
     while (i < all->collen)
     {
         if (ft_strlen(all->map[i]) != all->rowlen)
-            free_close(all);
+            free_close(all, "Error\ninvalid length\n");
         i++;
     }
     if (all->collen == all->rowlen)
-        free_close(all);
+        free_close(all, "Error\nnot rectangular\n");
 }
 
 void    onlywalls(t_game *all)
@@ -140,27 +148,27 @@ void    onlywalls(t_game *all)
     while (all->map[0][j] != '\0')
     {
         if (all->map[0][j] != '1')
-            free_close(all);
+            free_close(all, "Error\nno surrounding walls\n");
         j++;
     }
     j = 0;
     while (all->map[all->collen - 1][j] != '\0')
     {
         if (all->map[all->collen - 1][j] != '1')
-            free_close(all);
+            free_close(all, "Error\nno surrounding walls\n");
         j++;
     }
      while (i < all->collen)
     {
         if (all->map[0][all->rowlen - 1] != '1')
-            free_close(all);
+            free_close(all, "Error\nno surrounding walls\n");
         i++;
     }
     i = 0;
     while (i < all->collen)
     {
         if (all->map[i][0] != '1')
-            free_close(all);
+            free_close(all, "Error\nno surrounding walls\n");
         i++;
     }
 }
