@@ -123,11 +123,11 @@ void    checklinelen(t_game *all)
     while (i < all->collen)
     {
         if (ft_strlen(all->map[i]) != all->rowlen)
-            exit(0);
+            free_close(all);
         i++;
     }
     if (all->collen == all->rowlen)
-        exit(0);
+        free_close(all);
 }
 
 void    onlywalls(t_game *all)
@@ -140,27 +140,27 @@ void    onlywalls(t_game *all)
     while (all->map[0][j] != '\0')
     {
         if (all->map[0][j] != '1')
-            exit(0);
+            free_close(all);
         j++;
     }
     j = 0;
     while (all->map[all->collen - 1][j] != '\0')
     {
         if (all->map[all->collen - 1][j] != '1')
-            exit(0);
+            free_close(all);
         j++;
     }
      while (i < all->collen)
     {
         if (all->map[0][all->rowlen - 1] != '1')
-            exit(0);
+            free_close(all);
         i++;
     }
     i = 0;
     while (i < all->collen)
     {
         if (all->map[i][0] != '1')
-            exit(0);
+            free_close(all);
         i++;
     }
 }

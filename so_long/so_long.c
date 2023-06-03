@@ -11,6 +11,66 @@
 /* ************************************************************************** */
 
 #include "so_long.h"
+void	free_close(t_game *all)
+{
+	if (all->img.key)
+		mlx_destroy_image(all->mlx, all->img.key);
+	if (all->img.wall)
+		mlx_destroy_image(all->mlx, all->img.wall);
+	if (all->img.exit)
+		mlx_destroy_image(all->mlx, all->img.exit);
+	if (all->img.knight)
+		mlx_destroy_image(all->mlx, all->img.knight);
+	if (all->img.background)
+		mlx_destroy_image(all->mlx, all->img.background);
+	if (all->win)
+		mlx_destroy_window(all->mlx, all->win);
+	if (all->mlx)
+	{
+		mlx_destroy_display(all->mlx);
+		free(all->mlx);
+	}
+	exit (0);
+}
+void	init_game (t_game *all)
+{
+	all->collen = 0;
+	all->rowlen = 0;
+	all->c_number = 0;
+	all->n_moves = 0;
+	all->c_progress = 0;
+	all->x = 0;
+	all->y = 0;
+}
+void	c_num (t_game *all)
+{
+	int	i;
+	int j;
+	int p;
+	int	e;
+
+	i = 0;
+	e = 0;
+	p = 0;
+	while (i < all->collen)
+	{
+		j = 0;
+		while (j < all->rowlen)
+		{
+			if (all->map[i][j] == 'E')
+				e += 1;
+			if (all->map[i][j] == 'P')
+				p += 1;
+			if (all->map[i][j] == 'C')
+				all->c_number += 1;
+			j++;
+		}
+		i++;
+	}
+	if (p != 1 || e != 1 || all->c_number < 1)
+		free_close(all);
+}
+
 int	valid_move (t_game *all, char c)
 {
 	int x;
@@ -19,13 +79,29 @@ int	valid_move (t_game *all, char c)
 	x = all->x;
 	y = all->y;
 	if (c == 'a' && all->map[y][x-1] != '1')
+	{
+		if (all->map[y][x-1] == 'E' && all->c_number > all->c_progress)
+			return (1);
 		return (0);
+	}
 	if (c == 'd' && all->map[y][x+1] != '1')
+	{
+		if (all->map[y][x+1] == 'E' && all->c_number > all->c_progress)
+			return (1);
 		return (0);
-	if (c == 'w' && all->map[y-1][x] != '1')
+	}
+	if (c == 'w' && all->map[y-1][x] != '1') 
+	{
+		if (all->map[y-1][x] == 'E' && all->c_number > all->c_progress)
+			return (1);
 		return (0);
-	if (c == 's' && all->map[y+1][x] != '1')
+	}
+	if (c == 's' && all->map[y+1][x] != '1') 
+	{
+		if (all->map[y+1][x] == 'E' && all->c_number > all->c_progress)
+			return (1);
 		return (0);
+	}
 	return (1);
 }
 
@@ -38,7 +114,15 @@ void	move_left(t_game *all)
 	y = all->y;
 	mlx_put_image_to_window(all->mlx, all->win, all->img.background, x*32, y*32);
 	mlx_put_image_to_window(all->mlx, all->win, all->img.knight, (x-1)*32, y*32);
+	if (all->map[y][x-1] == 'C')
+	{
+		all->c_progress += 1;
+		all->map[y][x-1] = '0';
+	}
+	if (all->map[y][x-1] == 'E' && all->c_number == all->c_progress)
+		free_close(all);
 	all->x -= 1;
+	all->n_moves += 1;
 }
 
 void	move_right(t_game *all)
@@ -50,7 +134,15 @@ void	move_right(t_game *all)
 	y = all->y;
 	mlx_put_image_to_window(all->mlx, all->win, all->img.background, x*32, y*32);
 	mlx_put_image_to_window(all->mlx, all->win, all->img.knight, (x+1)*32, y*32);
+	if (all->map[y][x+1] == 'C')
+	{
+		all->c_progress += 1;
+		all->map[y][x+1] = '0';
+	}
+	if (all->map[y][x+1] == 'E' && all->c_number == all->c_progress)
+		free_close(all);
 	all->x += 1;
+	all->n_moves += 1;
 }
 
 void	move_up(t_game *all)
@@ -62,7 +154,15 @@ void	move_up(t_game *all)
 	y = all->y;
 	mlx_put_image_to_window(all->mlx, all->win, all->img.background, x*32, y*32);
 	mlx_put_image_to_window(all->mlx, all->win, all->img.knight, x*32, (y-1)*32);
+	if (all->map[y-1][x] == 'C')
+	{
+		all->c_progress += 1;
+		all->map[y-1][x] = '0';
+	}
+	if (all->map[y-1][x] == 'E' && all->c_number == all->c_progress)
+		free_close(all);
 	all->y -= 1;
+	all->n_moves += 1;
 }
 
 void	move_down(t_game *all)
@@ -73,8 +173,16 @@ void	move_down(t_game *all)
 	x = all->x;
 	y = all->y;
 	mlx_put_image_to_window(all->mlx, all->win, all->img.background, x*32, y*32);
-	mlx_put_image_to_window(all->mlx, all->win, all->img.knight, (x+1)*32, y*32);
+	mlx_put_image_to_window(all->mlx, all->win, all->img.knight, x*32, (y+1)*32);
+	if (all->map[y+1][x] == 'C')
+	{
+		all->c_progress += 1;
+		all->map[y+1][x] = '0';
+	}
+	if (all->map[y+1][x] == 'E' && all->c_number == all->c_progress)
+		free_close(all);
 	all->y += 1;
+	all->n_moves += 1;
 }
 
 void	swap_img (int keycode, t_game *all)
@@ -142,15 +250,18 @@ void	find_pos (t_game *all)
 int	main(int ac, char **av)
 {
 	t_game	all;
-	//t_data	img;
+
 	if(ac != 2)
 		return(0);
 	else
 	{
+		init_game(&all);
 		ft_checkmap(av[1], &all);
 		fillmap(av[1], &all);
 		onlywalls(&all);
 		find_pos(&all);
+		c_num (&all);
+		printf("%d\n", all.c_number);
 		all.mlx = mlx_init();
 		all.win = mlx_new_window(all.mlx, all.rowlen * 32, all.collen * 32, "so_long");
 		ft_printmap(&all);
